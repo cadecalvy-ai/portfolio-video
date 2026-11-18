@@ -1,0 +1,13 @@
+{
+  "name": "portfolio-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A 20-second animated reel of my portfolio, rendered frame by frame from one HTML page.",
+  "scripts": {
+    "capture": "node tools/capture-sites.mjs",
+    "render": "node tools/render.mjs"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.18.1"
+  }
+}

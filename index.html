@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cade Calvert portfolio film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=block" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ECEAE5;
+    --ink: #151515;
+    --mute: #8C8982;
+    --line: rgba(20, 20, 20, .1);
+    --accent: #F01A0E;   /* the avatar heart's red */
+    --paper: #fff;
+    --chip: #F2F0EB;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #111; overflow: hidden; }
+  #stage {
+    position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+    transform-origin: 0 0; -webkit-font-smoothing: antialiased;
+  }
+  #grid { position: absolute; inset: 0; }
+  #world { position: absolute; left: 0; top: 0; width: 3200px; height: 1855px; transform-origin: 0 0; }
+
+  /* ---------- canvas content (world space) ---------- */
+  #head { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 84px; letter-spacing: -.035em; line-height: 1; }
+  #head b { font-weight: 700; }
+  #head span { font-weight: 400; color: var(--mute); }
+
+  .frame { position: absolute; transform-origin: 50% 50%; }
+  .frame .lab { position: absolute; left: 0; bottom: 100%; margin-bottom: 10px; font-size: 18px; font-weight: 500; color: var(--mute); white-space: nowrap; }
+  .frame.small .lab { font-size: 15px; margin-bottom: 8px; }
+  .frame .body { position: absolute; inset: 0; border-radius: 6px; overflow: hidden; background: var(--paper); box-shadow: 0 0 0 1px rgba(20,20,20,.07), 0 10px 30px -14px rgba(20,20,20,.22); }
+  .frame img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+
+  .card { position: absolute; inset: 0; padding: 40px 44px; display: flex; flex-direction: column; }
+  .eyebrow { font-size: 15px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  .card h3 { font-size: 40px; font-weight: 700; letter-spacing: -.03em; line-height: 1.08; margin-top: 12px; }
+  .card p { font-size: 22px; line-height: 1.42; color: #3a3936; margin-top: 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip { font-size: 19px; font-weight: 500; padding: 8px 17px; border-radius: 999px; background: var(--chip); white-space: nowrap; }
+  .card .chips { margin-top: auto; }
+  .build { list-style: none; margin-top: 14px; }
+  .build li { display: grid; grid-template-columns: 236px 1fr; align-items: baseline; padding: 17px 0; border-top: 1px solid var(--line); }
+  .build b { font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
+  .build span { font-size: 19px; line-height: 1.36; color: #4a4945; }
+  .tool .chips { margin-top: 22px; gap: 12px; }
+  .tool .chip { font-size: 27px; padding: 11px 24px; font-weight: 600; }
+  .learn { margin-top: auto; font-size: 21px; color: #4a4945; }
+  .learn b { color: var(--ink); font-weight: 600; }
+  .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px; }
+  .steps div { background: var(--chip); border-radius: 12px; padding: 14px 18px; font-size: 20px; font-weight: 500; line-height: 1.25; display: flex; gap: 12px; align-items: baseline; }
+  .steps i { font-style: normal; font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+  .aside { font-size: 19px; color: var(--mute); margin-top: 16px; font-style: italic; }
+  .route { margin-top: 16px; width: 100%; height: 86px; }
+
+  #ava { position: absolute; left: 1600px; top: 1252px; display: grid; place-items: center; overflow: hidden; }
+  #ava img { width: 66%; height: 66%; image-rendering: pixelated; display: block; }
+  #avaLab { position: absolute; left: 1552px; top: 1178px; font-size: 5.6px; font-weight: 500; color: var(--accent); white-space: nowrap; }
+
+  .cm { position: absolute; display: flex; gap: 16px; align-items: flex-start; transform-origin: 26px 26px; }
+  .cm .pin { flex: none; width: 52px; height: 52px; border-radius: 50% 50% 50% 6px; background: var(--accent); display: grid; place-items: center; box-shadow: 0 6px 16px -6px rgba(240,26,14,.7); }
+  .cm .pin img { width: 30px; height: 30px; image-rendering: pixelated; filter: brightness(0) invert(1); }
+  .cm .bub { width: 676px; background: #fff; border-radius: 6px 20px 20px 20px; padding: 18px 24px 20px; box-shadow: 0 0 0 1px rgba(20,20,20,.06), 0 18px 40px -18px rgba(20,20,20,.35); }
+  .cm .who { font-size: 18px; color: var(--mute); }
+  .cm .who b { color: var(--ink); font-weight: 600; margin-right: 8px; }
+  .cm .txt { font-size: 26px; line-height: 1.34; margin-top: 6px; color: #2c2b29; }
+  .cm .txt b { font-weight: 700; color: var(--ink); }
+
+  /* ---------- interface chrome (screen space) ---------- */
+  #sel { position: absolute; border: 3px solid var(--accent); pointer-events: none; z-index: 20; }
+  #sel i { position: absolute; width: 13px; height: 13px; background: #fff; border: 3px solid var(--accent); }
+  #sel .tl { left: -8px; top: -8px; } #sel .tr { right: -8px; top: -8px; }
+  #sel .bl { left: -8px; bottom: -8px; } #sel .br { right: -8px; bottom: -8px; }
+  #sel .badge { position: absolute; left: 50%; top: 100%; transform: translate(-50%, 12px); background: var(--accent); color: #fff; font-size: 16px; font-weight: 600; padding: 4px 10px; border-radius: 5px; white-space: nowrap; }
+
+  .pill { position: absolute; z-index: 25; background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(20,20,20,.07), 0 8px 22px -12px rgba(20,20,20,.3); font-size: 19px; font-weight: 500; display: flex; align-items: center; gap: 10px; padding: 11px 16px; white-space: nowrap; }
+  #file { right: 40px; top: 36px; }
+  #file img { width: 22px; height: 22px; image-rendering: pixelated; }
+  #file b { font-weight: 700; } #file span { color: var(--mute); }
+  #zoom { left: 40px; bottom: 36px; font-variant-numeric: tabular-nums; font-weight: 600; min-width: 78px; justify-content: center; }
+  #hint { left: 134px; bottom: 36px; color: #55534f; }
+  #hint kbd { font: inherit; font-size: 15px; font-weight: 700; border-radius: 6px; padding: 3px 9px; background: var(--chip); color: var(--ink); }
+
+  #insp { position: absolute; top: 0; right: 0; width: 600px; height: 1080px; background: #fff; box-shadow: -1px 0 0 var(--line), -30px 0 60px -40px rgba(20,20,20,.25); z-index: 30; }
+  #insp .tabs { display: flex; gap: 30px; padding: 42px 52px 24px; font-size: 22px; font-weight: 500; color: var(--mute); border-bottom: 1px solid var(--line); }
+  #insp .tabs b { color: var(--ink); font-weight: 600; }
+  .blk { position: absolute; left: 52px; right: 52px; top: 132px; bottom: 0; }
+  .blk .k { font-size: 16px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); font-weight: 600; margin-top: 40px; }
+  .blk .k:first-child { margin-top: 0; }
+  .blk .title { font-size: 50px; font-weight: 600; letter-spacing: -.03em; line-height: 1.08; margin-top: 12px; }
+  .blk .num { font-weight: 700; letter-spacing: -.055em; color: var(--accent); line-height: 1; margin-top: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; transform-origin: 0 80%; }
+  .blk .num small { font-size: 40px; font-weight: 600; letter-spacing: -.02em; margin-left: 16px; }
+  .blk .desc { font-size: 30px; line-height: 1.38; margin-top: 20px; color: #2c2b29; }
+  .blk .chips { margin-top: 16px; }
+  .blk .chip { font-size: 22px; padding: 10px 20px; }
+  .blk .idx { position: absolute; right: 0; top: -88px; font-size: 20px; font-weight: 600; color: var(--mute); font-variant-numeric: tabular-nums; }
+  .blk .status { position: absolute; left: 0; bottom: 52px; font-size: 21px; color: #4a4945; display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+  .blk .status i { width: 12px; height: 12px; border-radius: 50%; }
+
+  #cur { position: absolute; left: 0; top: 0; z-index: 60; transform-origin: 0 0; }
+  #cur svg { display: block; filter: drop-shadow(0 4px 6px rgba(20,20,20,.25)); }
+  #cur span { position: absolute; left: 22px; top: 28px; background: var(--accent); color: #fff; font-size: 17px; font-weight: 600; padding: 4px 12px; border-radius: 999px 999px 999px 999px; }
+  #ring { position: absolute; z-index: 55; border: 3px solid var(--accent); border-radius: 50%; pointer-events: none; }
+
+  #end { position: absolute; left: 0; top: 0; width: 1920px; z-index: 40; text-align: center; }
+  #endName { position: absolute; left: 0; width: 1920px; top: 540px; font-size: 132px; font-weight: 700; letter-spacing: -.045em; line-height: 1.1; }
+  #endSub { position: absolute; left: 0; width: 1920px; top: 706px; font-size: 31px; color: #77746e; letter-spacing: -.005em; }
+  #endBtnWrap { position: absolute; left: 0; width: 1920px; top: 786px; display: flex; justify-content: center; }
+  #endBtn { font-size: 27px; font-weight: 600; padding: 17px 34px; border-radius: 999px; border: 2.5px solid var(--ink); display: flex; gap: 14px; align-items: center; }
+  #endBtn em { font-style: normal; color: var(--accent); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="grid"></div>
+  <div id="world">
+    <div id="head"><b>Cade Calvert</b><span> — VP of Marketing who is learning coding and automation</span></div>
+    <div id="avaLab">@cadecalvy-ai</div>
+    <div id="ava"><img src="assets/heart.png" alt=""></div>
+  </div>
+
+  <div id="sel"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i><span class="badge"></span></div>
+
+  <div id="file" class="pill"><img src="assets/heart.png" alt=""><b>cadecalvy-ai</b><span>/ README.md</span></div>
+  <div id="zoom" class="pill">100%</div>
+  <div id="hint" class="pill"><kbd>Tab</kbd>Next project</div>
+
+  <div id="insp">
+    <div class="tabs"><b>Project</b><span>Stack</span><span>Links</span></div>
+  </div>
+
+  <div id="end">
+    <div id="endName">Cade Calvert</div>
+    <div id="endSub">VP of Marketing · building the tools that keep the team running</div>
+    <div id="endBtnWrap"><div id="endBtn">github.com/cadecalvy-ai <em>→</em></div></div>
+  </div>
+
+  <div id="ring"></div>
+  <div id="cur">
+    <svg width="30" height="34" viewBox="0 0 30 34"><path d="M2 2 L27 13.5 L15.5 17.5 L10.5 30 Z" fill="#F01A0E" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    <span>Cade</span>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Everything on screen is a pure function of time `t` (seconds),
+   so the film can be previewed live or rendered frame by frame.
+   All text and images come from the GitHub profile README and
+   the projects it links to.
+   ============================================================ */
+const DURATION = 20;
+const $ = (s) => document.querySelector(s);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const E = {
+  lin: (p) => p,
+  io: (p) => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+  io4: (p) => (p < .5 ? 8 * p * p * p * p : 1 - Math.pow(-2 * p + 2, 4) / 2),
+  out: (p) => 1 - Math.pow(1 - p, 3),
+  in: (p) => p * p * p,
+  expo: (p) => (p >= 1 ? 1 : 1 - Math.pow(2, -10 * p)),
+  back: (p) => { const c = 1.9; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); },
+};
+const seg = (t, a, b, e = E.io) => e(clamp((t - a) / (b - a)));
+
+/* ---------- canvas layout (world pixels) ---------- */
+const AVA = { x: 1600, y: 1252, size: 96 };
+const MW = 760, MH = 475, MX = (i) => i * (3200 - MW) / 3;
+const SW = 500, SH = 312.5, SX = (i) => i * 540;
+const ROW_S = 190, ROW_A = 650, ROW_B = 1380;
+
+const card = {
+  build: `<div class="card"><div class="eyebrow">What I build</div><ul class="build">
+    <li><b>Automation</b><span>scripts and workflows that replace manual, repetitive ops tasks</span></li>
+    <li><b>Data</b><span>pipelines, reporting, and hosting setups that turn raw spreadsheets into answers</span></li>
+    <li><b>Web apps &amp; sites</b><span>practical tools and internal/public dashboards</span></li>
+    <li><b>AI-assisted tools</b><span>using LLMs to speed up real business workflows</span></li></ul></div>`,
+  tool: `<div class="card tool"><div class="eyebrow">Toolkit</div><div class="chips">
+    <span class="chip">Python</span><span class="chip">SQL</span><span class="chip">JavaScript</span><span class="chip">HTML/CSS</span>
+    <span class="chip">Git</span><span class="chip">APIs</span><span class="chip">AI/LLMs (Claude)</span></div>
+    <div class="learn"><b>Currently learning:</b> FastAPI, cloud data hosting</div></div>`,
+  writer: `<div class="card"><div class="eyebrow">Automation</div><h3>New Writer Alert Automation</h3>
+    <div class="steps"><div><i>01</i>Finds newly-credited writers</div><div><i>02</i>Pulls profile and production data</div>
+    <div><i>03</i>Researches them online</div><div><i>04</i>Drafts a formatted recognition email</div></div>
+    <div class="aside">…stopping just short of hitting send</div>
+    <div class="chips"><span class="chip">Python</span><span class="chip">Playwright</span><span class="chip">Claude</span></div></div>`,
+  locator: `<div class="card"><div class="eyebrow">Map tool</div><h3>Advisor Locator (UAV)</h3>
+    <p>Single-file, offline-friendly map tool for finding and routing to advisors by state/city/ZIP.</p>
+    <svg class="route" viewBox="0 0 672 86" fill="none">
+      <path d="M22 66 C 180 -18, 480 -18, 650 60" stroke="#F01A0E" stroke-width="3" stroke-dasharray="2 11" stroke-linecap="round"/>
+      <path d="M22 66 L 240 70 L 430 52 L 650 60" stroke="#151515" stroke-width="3" stroke-linejoin="round" opacity=".28"/>
+      <circle cx="22" cy="66" r="9" fill="#151515"/><circle cx="650" cy="60" r="9" fill="#F01A0E"/>
+      <text x="300" y="20" font-size="15" font-weight="600" fill="#F01A0E" font-family="Inter, sans-serif">FLY</text>
+      <text x="318" y="84" font-size="15" font-weight="600" fill="#8C8982" font-family="Inter, sans-serif">DRIVE</text>
+    </svg>
+    <div class="chips"><span class="chip">JavaScript</span><span class="chip">Leaflet</span><span class="chip">Printable itineraries</span></div></div>`,
+};
+
+const FRAMES = [
+  { id: 's1', small: 1, x: SX(0), y: ROW_S, label: 'Advisor Launch / business over time', img: 'advisorlaunch-chart' },
+  { id: 's2', small: 1, x: SX(1), y: ROW_S, label: 'Advisor Launch / first case, fast', img: 'advisorlaunch-first' },
+  { id: 's3', small: 1, x: SX(2), y: ROW_S, label: 'Tax Scan / client ranking', img: 'taxscan-demo' },
+  { id: 's4', small: 1, x: SX(3), y: ROW_S, label: 'Tax Scan / conversation brief', img: 'taxscan-client' },
+  { id: 's5', small: 1, x: SX(4), y: ROW_S, label: 'Lawn Wrangler / Mow-cast', img: 'lawnwrangler-mowcast' },
+  { id: 's6', small: 1, x: SX(5), y: ROW_S, label: 'Lawn Wrangler / Christmas lights', img: 'lawnwrangler-lights' },
+  { id: 'a1', x: MX(0), y: ROW_A, label: 'Advisor Launch · Numbers Site', img: 'advisorlaunch-hero' },
+  { id: 'a2', x: MX(1), y: ROW_A, label: 'Tax Scan', img: 'taxscan-home' },
+  { id: 'a3', x: MX(2), y: ROW_A, label: 'SK Box League', img: 'skleague-memory' },
+  { id: 'a4', x: MX(3), y: ROW_A, label: 'The Lawn Wrangler', img: 'lawnwrangler-hero' },
+  { id: 'b1', x: MX(0), y: ROW_B, label: 'What I build', html: card.build },
+  { id: 'b2', x: MX(1), y: ROW_B, label: 'Toolkit', html: card.tool },
+  { id: 'b3', x: MX(2), y: ROW_B, label: 'New Writer Alert Automation', html: card.writer },
+  { id: 'b4', x: MX(3), y: ROW_B, label: 'Advisor Locator (UAV)', html: card.locator },
+];
+
+const world = $('#world');
+const byId = {};
+FRAMES.forEach((f) => {
+  f.w = f.small ? SW : MW; f.h = f.small ? SH : MH;
+  const el = document.createElement('div');
+  el.className = 'frame' + (f.small ? ' small' : '');
+  el.style.cssText = `left:${f.x}px;top:${f.y}px;width:${f.w}px;height:${f.h}px`;
+  el.innerHTML = `<div class="lab">${f.label}</div><div class="body">${f.img ? `<img src="assets/${f.img}.png" alt="">` : f.html}</div>`;
+  world.insertBefore(el, $('#avaLab'));
+  f.el = el; f.lab = el.firstChild; byId[f.id] = f;
+  f.dx = AVA.x - (f.x + f.w / 2); f.dy = AVA.y - (f.y + f.h / 2);
+  f.dist = Math.hypot(f.dx, f.dy);
+});
+[...FRAMES].sort((a, b) => a.dist - b.dist).forEach((f, i) => (f.order = i));
+
+/* comments (world space, under the two automation cards) */
+const COMMENTS = [
+  { frame: 'b3', t: 14.2, html: '<b>Zero manual lookups.</b> Research, write-up, and a ready-to-send email draft, end to end.' },
+  { frame: 'b4', t: 14.8, html: '<b>No server or VPN required.</b> Radius search, drive/fly routing, and printable itineraries.' },
+];
+COMMENTS.forEach((c) => {
+  const f = byId[c.frame];
+  const el = document.createElement('div');
+  el.className = 'cm';
+  el.style.cssText = `left:${f.x}px;top:${f.y + f.h + 30}px`;
+  el.innerHTML = `<div class="pin"><img src="assets/heart.png" alt=""></div><div class="bub"><div class="who"><b>Cade Calvert</b>At work, the short version</div><div class="txt">${c.html}</div></div>`;
+  world.appendChild(el); c.el = el;
+});
+
+/* ---------- inspector content, one block per featured project ---------- */
+const PROJECTS = [
+  { frame: 'a1', in: 5.0, out: 6.7, title: 'Advisor Launch<br>Numbers Site', num: { to: 216.84, dec: 2, pre: '$', suf: 'M', size: 108 }, unit: '',
+    desc: 'total business from 119 attendees, charted straight from cohort and production spreadsheets.',
+    tech: ['Python', 'HTML/CSS/JS'], status: 'Live · why-advisor-launch.netlify.app', dot: '#1DB954' },
+  { frame: 'a2', in: 7.15, out: 8.9, title: 'Tax Scan', num: { to: 24, dec: 0, size: 190 }, unit: 'demo clients',
+    desc: 'graded for AUM fit, annuity and life insurance, with every point traced to the 1040 line it came from.',
+    tech: ['Python', 'Tesseract OCR', 'Flask', 'anime.js'], status: 'Runs locally · demo uses fictional clients', dot: '#F5A524' },
+  { frame: 'a3', in: 9.35, out: 11.1, title: 'SK Box League', num: { to: 12, dec: 0, size: 190 }, unit: 'managers',
+    desc: 'and 4 seasons of league history. Live weekly matchups, start/sit projections, weather and injury context.',
+    tech: ['JavaScript', 'HTML/CSS', 'Sleeper + ESPN'], status: 'Live · sk-league.netlify.app', dot: '#1DB954' },
+  { frame: 'a4', in: 11.55, out: 99, title: 'The Lawn Wrangler', num: { to: 1, dec: 0, size: 190, pop: true }, unit: 'address',
+    desc: 'in, instant estimate out. It measures the lot from city records, detects concrete in aerial photos, and prices mowing and lights.',
+    tech: ['JavaScript', 'Leaflet', 'ArcGIS REST', 'Netlify'], status: 'Live · thelawnwrangler.netlify.app', dot: '#1DB954' },
+];
+PROJECTS.forEach((p) => {
+  const el = document.createElement('div');
+  el.className = 'blk';
+  el.innerHTML = `
+    <div class="idx" data-d="0">0${PROJECTS.indexOf(p) + 1} / 0${PROJECTS.length}</div>
+    <div class="k" data-d="0">Project</div>
+    <div class="title" data-d="0.05">${p.title}</div>
+    <div class="k" data-d="0.2">By the numbers</div>
+    <div class="num" data-d="0.25" style="font-size:${p.num.size}px"><span class="v"></span>${p.unit ? `<small>${p.unit}</small>` : ''}</div>
+    <div class="desc" data-d="0.4">${p.desc}</div>
+    <div class="k" data-d="0.75">Tech</div>
+    <div class="chips">${p.tech.map((c, i) => `<span class="chip" data-d="${0.82 + i * 0.07}" data-pop="1">${c}</span>`).join('')}</div>
+    <div class="status" data-d="1.0"><i style="background:${p.dot}"></i>${p.status}</div>`;
+  $('#insp').appendChild(el);
+  p.el = el; p.v = el.querySelector('.v'); p.numEl = el.querySelector('.num');
+  p.parts = [...el.querySelectorAll('[data-d]')].map((n) => ({ n, d: +n.dataset.d, pop: !!n.dataset.pop }));
+});
+
+/* ---------- camera ---------- */
+const OVER = { s: .5, wx: 1600, wy: 927.5, sx: 960, sy: 548 };
+const focus = (id) => { const f = byId[id]; return { s: 1.5, wx: f.x + f.w / 2, wy: f.y + f.h / 2, sx: 690, sy: 548 }; };
+const CAM0 = { s: 3.44, wx: AVA.x, wy: AVA.y, sx: 960, sy: 540 };
+const MOVES = [
+  { a: 2.5, b: 3.7, to: OVER, e: E.io },
+  { a: 4.45, b: 5.35, to: focus('a1'), e: E.io },
+  { a: 6.75, b: 7.4, to: focus('a2'), e: E.io4 },
+  { a: 8.95, b: 9.6, to: focus('a3'), e: E.io4 },
+  { a: 11.15, b: 11.8, to: focus('a4'), e: E.io4 },
+  { a: 13.3, b: 14.15, to: { s: 1.05, wx: byId.b3.x + (byId.b4.x + MW - byId.b3.x) / 2, wy: 1677, sx: 960, sy: 520 }, e: E.io },
+  { a: 15.7, b: 16.7, to: OVER, e: E.io },
+  { a: 16.9, b: 17.8, to: { s: 2.6, wx: AVA.x, wy: AVA.y, sx: 960, sy: 372 }, e: E.io },
+];
+function camAt(t) {
+  let c = CAM0;
+  for (const m of MOVES) {
+    if (t <= m.a) break;
+    const p = seg(t, m.a, m.b, m.e);
+    c = { s: c.s * Math.pow(m.to.s / c.s, p), wx: lerp(c.wx, m.to.wx, p), wy: lerp(c.wy, m.to.wy, p), sx: lerp(c.sx, m.to.sx, p), sy: lerp(c.sy, m.to.sy, p) };
+  }
+  return { ...c, tx: c.sx - c.wx * c.s, ty: c.sy - c.wy * c.s };
+}
+
+/* ---------- selection, cursor, clicks ---------- */
+const SELECT = [
+  { id: 'ava', a: 1.9, b: 2.55 },
+  { id: 'a1', a: 4.35, b: 6.8 }, { id: 'a2', a: 7.0, b: 9.0 }, { id: 'a3', a: 9.2, b: 11.2 }, { id: 'a4', a: 11.4, b: 13.45 },
+];
+const CURSOR = [ // screen-space path
+  { t: 3.45, x: 2000, y: 780 }, { t: 4.28, x: 392, y: 552 }, { t: 4.45, x: 392, y: 552 }, { t: 5.35, x: 900, y: 770 }, { t: 6.0, x: 930, y: 800 },
+  { t: 13.55, x: 760, y: 1010 }, { t: 14.15, x: 176, y: 806 }, { t: 14.3, x: 176, y: 806 }, { t: 14.75, x: 1030, y: 806 }, { t: 14.9, x: 1030, y: 806 }, { t: 15.3, x: 930, y: 968 }, { t: 15.6, x: 930, y: 968 },
+  { t: 18.45, x: 1560, y: 1130 }, { t: 19.2, x: 1052, y: 846 }, { t: 20, x: 1052, y: 846 },
+];
+const CUR_VIS = [[3.5, 5.75], [13.6, 15.75], [18.5, 21]];
+const CLICKS = [4.33, 14.2, 14.8, 19.5];
+
+const els = {
+  grid: $('#grid'), head: $('#head'), ava: $('#ava'), avaImg: $('#ava img'), avaLab: $('#avaLab'), sel: $('#sel'), badge: $('#sel .badge'),
+  file: $('#file'), zoom: $('#zoom'), hint: $('#hint'), kbd: $('#hint kbd'), insp: $('#insp'), cur: $('#cur'), ring: $('#ring'),
+  endName: $('#endName'), endSub: $('#endSub'), endBtn: $('#endBtn'),
+};
+const mix = (a, b, p) => `rgb(${a.map((v, i) => Math.round(lerp(v, b[i], p))).join(',')})`;
+
+function render(t) {
+  const c = camAt(t);
+  world.style.transform = `translate(${c.tx}px,${c.ty}px) scale(${c.s})`;
+
+  // dotted canvas
+  const gap = 64 * c.s, r = clamp(.9 + c.s * .55, 1.1, 2.8);
+  els.grid.style.backgroundImage = `radial-gradient(circle, rgba(20,20,20,.2) ${r}px, transparent ${r + .8}px)`;
+  els.grid.style.backgroundSize = `${gap}px ${gap}px`;
+  els.grid.style.backgroundPosition = `${c.tx - gap / 2}px ${c.ty - gap / 2}px`;
+  els.grid.style.opacity = seg(t, 0, .5, E.out) * clamp((gap - 24) / 30);
+
+  // avatar: dot -> tile -> heart drawn in, row by row
+  const pop = seg(t, .35, .85, E.back), m = seg(t, 1.0, 1.5, E.io);
+  const beat = Math.max(0, Math.sin(clamp((t - 18.25) / .22) * Math.PI)) * .05 + Math.max(0, Math.sin(clamp((t - 18.5) / .22) * Math.PI)) * .035
+             + Math.max(0, Math.sin(clamp((t - 1.84) / .25) * Math.PI)) * .04;
+  const size = lerp(13, AVA.size, m);
+  els.ava.style.width = els.ava.style.height = size + 'px';
+  els.ava.style.borderRadius = lerp(size / 2, 21, m) + 'px';
+  els.ava.style.background = mix([21, 21, 21], [255, 255, 255], seg(t, 1.3, 1.5, E.io));
+  els.ava.style.boxShadow = `0 0 0 ${m * .8}px rgba(20,20,20,.1), 0 ${8 * m}px ${22 * m}px -${10 * m}px rgba(20,20,20,${.3 * m})`;
+  els.ava.style.transform = `translate(-50%,-50%) scale(${pop * (1 + beat)})`;
+  const rows = Math.ceil(seg(t, 1.42, 1.82, E.lin) * 9) / 9;
+  els.avaImg.style.clipPath = `inset(0 0 ${(1 - rows) * 100}% 0)`;
+  els.avaLab.style.opacity = seg(t, 1.95, 2.1, E.out) * (1 - seg(t, 2.4, 2.55, E.out));
+
+  // header
+  const hIn = seg(t, 3.0, 3.5, E.out), hOut = seg(t, 16.45, 16.85, E.in);
+  els.head.style.opacity = hIn * (1 - hOut);
+  els.head.style.transform = `translateY(${(1 - hIn) * 26}px)`;
+
+  // frames: pop in on the first zoom-out, fold back into the avatar at the end
+  const selNow = SELECT.find((s) => t >= s.a && t <= s.b);
+  for (const f of FRAMES) {
+    const a = 2.75 + f.order * .055;
+    const p = seg(t, a, a + .5, E.back), o = seg(t, a, a + .25, E.out);
+    const q = seg(t, 16.5 + (13 - f.order) * .028, 17.1 + (13 - f.order) * .028, E.in);
+    f.el.style.opacity = o * (1 - seg(t, 16.75 + (13 - f.order) * .028, 17.1 + (13 - f.order) * .028, E.lin));
+    f.el.style.transform = `translate(${f.dx * q}px,${f.dy * q}px) scale(${lerp(.86, 1, p) * (1 - q * .92)})`;
+    f.lab.style.color = selNow && selNow.id === f.id ? 'var(--accent)' : '';
+    f.lab.style.opacity = 1 - seg(t, 16.4, 16.6, E.lin);
+  }
+
+  // selection box (screen space so its stroke stays crisp at any zoom)
+  if (selNow) {
+    const f = selNow.id === 'ava' ? { x: AVA.x - 48, y: AVA.y - 48, w: 96, h: 96 } : byId[selNow.id];
+    const o = Math.min(seg(t, selNow.a, selNow.a + .14, E.out), 1 - seg(t, selNow.b - .14, selNow.b, E.out));
+    const grow = selNow.id === 'ava' ? lerp(1.12, 1, seg(t, selNow.a, selNow.a + .3, E.out)) : 1;
+    const w = f.w * c.s * grow, h = f.h * c.s * grow;
+    els.sel.style.cssText = `opacity:${o};left:${c.tx + (f.x + f.w / 2) * c.s - w / 2}px;top:${c.ty + (f.y + f.h / 2) * c.s - h / 2}px;width:${w}px;height:${h}px`;
+    els.badge.textContent = selNow.id === 'ava' ? '148 × 148' : '1440 × 900';
+    els.badge.style.opacity = c.s > .9 ? 1 : 0;
+  } else els.sel.style.opacity = 0;
+
+  // chrome
+  const chrome = seg(t, 1.55, 2.0, E.out) * (1 - seg(t, 16.9, 17.25, E.out));
+  els.file.style.opacity = chrome; els.file.style.transform = `translateY(${(1 - seg(t, 1.55, 2.0, E.out)) * -14}px)`;
+  els.zoom.style.opacity = chrome; els.zoom.textContent = Math.round(c.s * 100) + '%';
+  const hint = seg(t, 5.5, 5.85, E.out) * (1 - seg(t, 13.15, 13.4, E.out));
+  els.hint.style.opacity = hint; els.hint.style.transform = `translateY(${(1 - hint) * 12}px)`;
+  const press = [6.72, 8.92, 11.12].some((k) => t >= k && t < k + .22);
+  els.kbd.style.background = press ? 'var(--accent)' : ''; els.kbd.style.color = press ? '#fff' : '';
+  els.kbd.style.transform = press ? 'translateY(1.5px)' : '';
+
+  // inspector
+  const ip = seg(t, 4.75, 5.35, E.expo) * (1 - seg(t, 13.25, 13.75, E.io));
+  els.insp.style.transform = `translateX(${(1 - ip) * 640}px)`;
+  for (const p of PROJECTS) {
+    const tl = t - p.in, gone = seg(t, p.out, p.out + .16, E.out);
+    p.el.style.opacity = tl < 0 ? 0 : 1 - gone;
+    p.el.style.transform = `translateX(${-gone * 18}px)`;
+    for (const part of p.parts) {
+      const k = seg(tl, part.d, part.d + .38, E.out);
+      part.n.style.opacity = k;
+      if (part.n !== p.numEl) part.n.style.transform = part.pop ? `scale(${lerp(.8, 1, seg(tl, part.d, part.d + .38, E.back))})` : `translateY(${(1 - k) * 14}px)`;
+    }
+    const n = p.num, cp = seg(tl, .3, 1.2, E.expo);
+    const val = n.pop ? n.to : n.to * cp;
+    p.v.textContent = (n.pre || '') + val.toFixed(n.dec) + (n.suf || '');
+    p.numEl.style.transform = n.pop ? `scale(${lerp(.5, 1, seg(tl, .25, .7, E.back))})` : `translateY(${(1 - seg(tl, .25, .63, E.out)) * 14}px)`;
+  }
+
+  // comments
+  for (const cm of COMMENTS) {
+    const k = seg(t, cm.t, cm.t + .42, E.back), o = seg(t, cm.t, cm.t + .18, E.out) * (1 - seg(t, 15.55, 15.8, E.out));
+    cm.el.style.opacity = o; cm.el.style.transform = `scale(${lerp(.55, 1, k)})`;
+  }
+
+  // end card
+  const n1 = seg(t, 17.7, 18.25, E.expo), n2 = seg(t, 17.95, 18.45, E.expo), n3 = seg(t, 18.15, 18.65, E.back);
+  els.endName.style.opacity = seg(t, 17.7, 18.0, E.out); els.endName.style.transform = `translateY(${(1 - n1) * 46}px)`;
+  els.endSub.style.opacity = seg(t, 17.95, 18.3, E.out); els.endSub.style.transform = `translateY(${(1 - n2) * 26}px)`;
+  const hov = seg(t, 19.12, 19.3, E.out), down = t >= 19.5 && t < 19.64;
+  els.endBtn.style.opacity = seg(t, 18.15, 18.4, E.out);
+  els.endBtn.style.transform = `scale(${lerp(.8, 1, n3) * (down ? .96 : 1)})`;
+  els.endBtn.style.background = mix([236, 234, 229], [21, 21, 21], hov);
+  els.endBtn.style.color = mix([21, 21, 21], [255, 255, 255], hov);
+
+  // cursor + click ring
+  let i = 0; while (i < CURSOR.length - 2 && t > CURSOR[i + 1].t) i++;
+  const k0 = CURSOR[i], k1 = CURSOR[i + 1], kp = seg(t, k0.t, k1.t, E.io);
+  const cx = t <= k0.t ? k0.x : lerp(k0.x, k1.x, kp), cy = t <= k0.t ? k0.y : lerp(k0.y, k1.y, kp);
+  const vis = CUR_VIS.reduce((v, [a, b]) => Math.max(v, Math.min(seg(t, a, a + .15, E.out), 1 - seg(t, b - .2, b, E.out))), 0);
+  const tap = CLICKS.some((k) => t >= k && t < k + .12);
+  els.cur.style.opacity = vis; els.cur.style.transform = `translate(${cx}px,${cy}px) scale(${tap ? .86 : 1})`;
+  const ck = CLICKS.find((k) => t >= k && t < k + .5);
+  if (ck !== undefined) {
+    const rp = seg(t, ck, ck + .5, E.out), d = lerp(14, 84, rp);
+    els.ring.style.cssText = `opacity:${1 - rp};left:${cx - d / 2}px;top:${cy - d / 2}px;width:${d}px;height:${d}px`;
+  } else els.ring.style.opacity = 0;
+}
+
+/* ---------- boot: live preview by default, frame-accurate when driven by the renderer ---------- */
+window.DURATION = DURATION;
+window.renderAt = render;
+window.ready = Promise.all([document.fonts.ready, ...[...document.images].map((im) => im.decode().catch(() => {}))]).then(() => { render(0); return true; });
+if (!new URLSearchParams(location.search).has('render')) {
+  const stage = $('#stage');
+  const fit = () => { const k = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `translate(${(innerWidth - 1920 * k) / 2}px,${(innerHeight - 1080 * k) / 2}px) scale(${k})`; };
+  addEventListener('resize', fit); fit();
+  const at = new URLSearchParams(location.search).get('t');
+  window.ready.then(() => {
+    if (at !== null) return render(+at);
+    const t0 = performance.now();
+    const loop = (now) => { render(((now - t0) / 1000) % (DURATION + 1)); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  });
+}
+</script>
+</body>
+</html>
